@@ -14,7 +14,7 @@ export default function Body({ title, data }: BodyProps) {
     if (isNodeJS) {
         return (
             <main>
-                <ResourcesByPerson width={1200} height={550} data={data} />
+                <ResourcesByPerson width={1200} height={500} data={data} />
             </main>
         );
     }
@@ -23,7 +23,7 @@ export default function Body({ title, data }: BodyProps) {
             {(domNode: HTMLElement) => {
                 const rect = domNode.getBoundingClientRect();
                 const width = rect.width;
-                const height = width / 12 * 5.5;
+                const height = width / 12 * 5;
                 return <ResourcesByPerson width={width} height={height} data={data} />;
             }}
         </main>

@@ -11,17 +11,22 @@ interface ChartProps {
     data: BelstatData;
 }
 
+const MAX_WIDTH = 1200;
+const MIN_WIDTH = 800;
+const ICON_SIZE = 16;
 const PADDING = 20;
 const BAR_LABEL_SIZE = 10;
+const MONEY_HISTOGRAM_HEIGHT_RATIO = 0.7;
+const PEOPLE_HISTOGRAM_HEIGHT_RATIO = 0.3;
 const GRID_FILL_COLOR = 'rgba(64, 128, 172, 0.05)';
-const BAR_PADDING = 4;
-const BASE_OFFSET = -10;
+const BAR_PADDING = 2;
+const BASE_OFFSET = 5;
 const MONEY_COLOR = 'green';
 const TAXES_COLOR = 'rgb(200, 48, 24)';
 const PEOPLE_COLOR_HSL_0 = [280, 90, 20];
 const PEOPLE_COLOR_HSL_1 = [20, 70, 50];
 
-function format(x: number) {
+function formatShort(x: number) {
     let n = x;
     let p = '';
     if (x >= 1000000) {
@@ -33,18 +38,24 @@ function format(x: number) {
     }
     const s = n > 1000 ? 0.1 : n > 100 ? 1 : 100;
     return `${Math.round(n * s) / s}${p}`;
-};
+}
+
+function formatLong(x: number) {
+    const s = Math.round(x).toString(10);
+    let r = '';
+    for (let i = 0; i < s.length; i++) {
+        r += i >= 3 ? '0' : s.charAt(i);
+        if ((s.length - i - 1) % 3 === 0 && i < s.length - 1) {
+            r += ' ';
+        }
+    }
+    return r;
+}
 
 export default function Chart({ width: srcWidth, height: srcHeight, data }: ChartProps) {
 
-    const MAX_WIDTH = 1200;
-    const MIN_WIDTH = 800;
     const width = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, srcWidth));
     const height = srcHeight / srcWidth * width;
-
-    const ROWS_PER_BAR = width < 900 ? 2 : width < 1000 ? 3 : 4;
-    const MONEY_PER_ICON = 5000000 * 25 / ROWS_PER_BAR / ROWS_PER_BAR;
-    const PEOPLE_PER_ICON = 30000 * 25 / ROWS_PER_BAR / ROWS_PER_BAR;
 
     const avgSalaryUsd = data.avgSalaryByn / data.usdToByn;
     const avgPensionUsd = data.avgPensionByn / data.usdToByn;
@@ -60,20 +71,38 @@ export default function Chart({ width: srcWidth, height: srcHeight, data }: Char
             : people * (fromUsd + toUsd) / 2;
         return { fromUsd, toUsd, people, totalUsd };
     });
-    bands[0].fromUsd = 50; // For smaller band width
     const lastBand = bands[bands.length - 1];
     lastBand.totalUsd = allUsd - bands.slice(0, bands.length - 1).reduce((sum, d) => sum + d.totalUsd, 0);
     lastBand.toUsd = lastBand.fromUsd + 2 * (lastBand.totalUsd / lastBand.people - lastBand.fromUsd);
 
-    const min = Math.min(...bands.map((d) => d.fromUsd));
-    const max = Math.max(...bands.map((d) => d.toUsd));
-
     function scaleX(d: number) {
-        return PADDING + (width - 2 * PADDING) * (d - min) / (max - min);
+        const x0 = PADDING;
+        const x1 = width - PADDING;
+        const pTicks = [0];
+        bands.forEach((b) => {
+            pTicks.push(pTicks[pTicks.length - 1] + b.people);
+        });
+        const xTicks = pTicks.map((p) => {
+            const tp = (p - pTicks[0]) / (pTicks[pTicks.length - 1] - pTicks[0]);
+            return x0 * (1 - tp) + x1 * tp;
+        });
+        const bandIndex = bands.findIndex((b) => d >= b.fromUsd && d <= b.toUsd);
+        const band = bands[bandIndex];
+        const t = (d - band.fromUsd) / (band.toUsd - band.fromUsd);
+        return xTicks[bandIndex] * (1 - t) + xTicks[bandIndex + 1] * t;
     }
 
-    const minDiff = Math.min(...bands.map((d) => d.toUsd - d.fromUsd));
-    const minStep = (scaleX(max) - scaleX(min)) / (max - min) * minDiff;
+    const maxMoneyPerPeopleBand = bands.slice().sort((a, b) => b.totalUsd / b.people - a.totalUsd / a.people)[0];
+    const maxMoneyPerPeopleWidth = scaleX(maxMoneyPerPeopleBand.toUsd) - scaleX(maxMoneyPerPeopleBand.fromUsd) - BAR_PADDING * 2;
+    const maxMoneyPerPeopleHeight = MONEY_HISTOGRAM_HEIGHT_RATIO * (height / 2 - PADDING);
+    const MONEY_PER_ICON = maxMoneyPerPeopleBand.totalUsd / (
+        maxMoneyPerPeopleWidth * maxMoneyPerPeopleHeight / (ICON_SIZE ** 2)
+    );
+    const peopleWidth = scaleX(lastBand.toUsd) - scaleX(bands[0].fromUsd) - BAR_PADDING * 2;
+    const peopleHeight = PEOPLE_HISTOGRAM_HEIGHT_RATIO * (height / 2 - PADDING);
+    const PEOPLE_PER_ICON = data.people / (
+        peopleWidth * peopleHeight / (ICON_SIZE ** 2)
+    );
 
     const baseY = height / 2 + BASE_OFFSET;
 
@@ -107,17 +136,19 @@ export default function Chart({ width: srcWidth, height: srcHeight, data }: Char
     });
 
     const moneyBars = bands.map((d) => {
-        const includesSteps = Math.round((d.toUsd - d.fromUsd) / minDiff);
+        const barWidth = scaleX(d.toUsd) - scaleX(d.fromUsd) - 2 * BAR_PADDING;
+        const rows = Math.floor(barWidth / ICON_SIZE);
+        const thickness = rows * ICON_SIZE;
         return (
             <PatternBar
                 x={scaleX((d.fromUsd + d.toUsd) / 2)}
-                y={baseY - BAR_PADDING}
+                y={baseY - BAR_PADDING - BAR_LABEL_SIZE / 2}
                 direction="to-top"
-                rows={Math.round(ROWS_PER_BAR * includesSteps)}
+                rows={rows}
                 count={Math.round(d.totalUsd / MONEY_PER_ICON)}
-                thickness={minStep * includesSteps - BAR_PADDING * 2 * includesSteps}
+                thickness={thickness}
                 pattern={(x, y, size) => <MoneyIcon x={x} y={y} size={size} color={MONEY_COLOR} />}
-                label={`$${format(d.totalUsd)}`}
+                label={`$${thickness > 80 ? formatLong(d.totalUsd) : formatShort(d.totalUsd)}`}
                 labelSize={BAR_LABEL_SIZE}
             />
         );
@@ -134,45 +165,49 @@ export default function Chart({ width: srcWidth, height: srcHeight, data }: Char
     }
 
     const peopleBars = bands.map((d) => {
-        const includesSteps = Math.round((d.toUsd - d.fromUsd) / minDiff);
+        const barWidth = scaleX(d.toUsd) - scaleX(d.fromUsd) - 2 * BAR_PADDING;
+        const rows = Math.floor(barWidth / ICON_SIZE);
+        const thickness = rows * ICON_SIZE;
         return (
             <PatternBar
                 x={scaleX((d.fromUsd + d.toUsd) / 2)}
-                y={baseY + BAR_PADDING}
+                y={baseY + BAR_PADDING + BAR_LABEL_SIZE / 2}
                 direction="to-bottom"
-                rows={ROWS_PER_BAR * includesSteps}
+                rows={rows}
                 count={Math.round(d.people / PEOPLE_PER_ICON)}
-                thickness={minStep * includesSteps - BAR_PADDING * 2 * includesSteps}
+                thickness={thickness}
                 pattern={(x, y, size) => <PersonIcon x={x} y={y} size={size} color={getPeopleColor(d)} />}
-                label={`${format(d.people)}`}
+                label={`${thickness > 80 ? formatLong(d.people) : formatShort(d.people)}`}
                 labelSize={BAR_LABEL_SIZE}
             />
         );
     });
 
     const taxesUsd = avgSalaryUsd * data.workingPeople * (data.taxPercent + data.socialTaxPercent) / 100;
-    const incomeLabel = `$${format(avgSalaryUsd)} × ${format(data.workingPeople)} × (1 − ${data.taxPercent}%) + $${format(avgPensionUsd)} × ${format(data.retiredPeople)} = $${format(allUsd)} (ЗП и пенсии)`;
-    const taxesLabel = `(налог и ФСЗН) $${format(avgSalaryUsd)} × ${format(data.workingPeople)} × (${data.taxPercent}% + ${data.socialTaxPercent}%) = $${format(taxesUsd)}`;
+    const incomeLabel = `$${formatShort(avgSalaryUsd)} × ${formatShort(data.workingPeople)} × (1 − ${data.taxPercent}%) + $${formatShort(avgPensionUsd)} × ${formatShort(data.retiredPeople)} = $${formatLong(allUsd)} (ЗП и пенсии)`;
+    const taxesLabel = `(налог и ФСЗН) $${formatShort(avgSalaryUsd)} × ${formatShort(data.workingPeople)} × (${data.taxPercent}% + ${data.socialTaxPercent}%) = $${formatLong(taxesUsd)}`;
 
-    const TOTALS_PER_ICON = 50000000 * 25 / ROWS_PER_BAR / ROWS_PER_BAR;
+    const TOTALS_HEIGHT = height / 7;
+    const TOTALS_ROWS = Math.floor(TOTALS_HEIGHT / ICON_SIZE);
+    const TOTALS_PER_ICON = Math.max(allUsd, taxesUsd) / (TOTALS_ROWS ** 2);
     const incomeBar = <PatternBar
         x={width / 2}
-        y={height - PADDING - minStep / 2}
+        y={height - PADDING - TOTALS_HEIGHT / 2}
         direction="to-left"
-        rows={ROWS_PER_BAR}
+        rows={TOTALS_ROWS}
         count={Math.round(allUsd / TOTALS_PER_ICON)}
-        thickness={minStep}
+        thickness={TOTALS_ROWS * ICON_SIZE}
         pattern={(x, y, size) => <MoneyIcon x={x} y={y} size={size} color={MONEY_COLOR} />}
         label={incomeLabel}
         labelSize={BAR_LABEL_SIZE}
     />;
     const taxesBar = <PatternBar
         x={width / 2}
-        y={height - PADDING - minStep / 2}
+        y={height - PADDING - TOTALS_HEIGHT / 2}
         direction="to-right"
-        rows={ROWS_PER_BAR}
+        rows={TOTALS_ROWS}
         count={Math.round(taxesUsd / TOTALS_PER_ICON)}
-        thickness={minStep}
+        thickness={TOTALS_ROWS * ICON_SIZE}
         pattern={(x, y, size) => <MoneyIcon x={x} y={y} size={size} color={TAXES_COLOR} />}
         label={taxesLabel}
         labelSize={BAR_LABEL_SIZE}

@@ -69,17 +69,18 @@ export default function PatternBar(props: PatternBarProps) {
             'to-top': 'top',
             'to-bottom': 'bottom'
         }[props.direction] as 'top' | 'center' | 'bottom';
+        const move = cellSize * columns.length + cellSize * PADDING;
         const tx = {
-            'to-left': -cellSize * columns.length,
-            'to-right': cellSize * columns.length,
+            'to-left': -move,
+            'to-right': move,
             'to-top': 0,
             'to-bottom': 0
         }[props.direction];
         const ty = {
             'to-left': 0,
             'to-right': 0,
-            'to-top': -cellSize * columns.length,
-            'to-bottom': cellSize * columns.length
+            'to-top': -move,
+            'to-bottom': move
         }[props.direction];
         label = (
             <Label x={tx} y={ty} halign={halign} valign={valign} size={props.labelSize}>

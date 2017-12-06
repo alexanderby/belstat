@@ -15,7 +15,7 @@ export default function PersonIcon(props: PersonIconProps) {
     return (
         <Icon {...props}>
             <path fill={props.color} d={PERSON_BODY_PATH} />
-            <path fill={props.color} d={PERSON_HEAD_PATH} opacity="0.55" />
+            <path fill={props.color} d={PERSON_HEAD_PATH} opacity="0.5" />
         </Icon>
     );
 }
