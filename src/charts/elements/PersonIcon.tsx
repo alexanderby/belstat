@@ -13,7 +13,7 @@ const PERSON_HEAD_PATH = 'M-0.2,-0.3 a0.2,0.2 0 1 1 0.4,0 a0.2,0.2 0 1 1 -0.4,0 
 
 export default function PersonIcon(props: PersonIconProps) {
     return (
-        <Icon {...props}>
+        <Icon x={props.x} y={props.y} size={props.size}>
             <path fill={props.color} d={PERSON_BODY_PATH} />
             <path fill={props.color} d={PERSON_HEAD_PATH} opacity="0.5" />
         </Icon>

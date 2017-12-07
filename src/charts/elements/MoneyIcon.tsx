@@ -17,7 +17,7 @@ const MONEY_INNER_PATH = 'M-0.4,-0.2 h0.8 v0.4 h-0.8 Z';
 
 export default function MoneyIcon(props: MoneyIconProps) {
     return (
-        <Icon {...props}>
+        <Icon x={props.x} y={props.y} size={props.size}>
             <path fill={props.color} d={MONEY_INNER_PATH} opacity="0.5" />
             <path fill={props.color} d={MONEY_ICON_PATH} />
         </Icon>
