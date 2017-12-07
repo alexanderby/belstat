@@ -31,13 +31,13 @@ function formatShort(x: number) {
     let p = '';
     if (x >= 1000000) {
         n = x / 1000000;
-        p = 'M';
+        p = 'млн';
     } else if (x >= 1000) {
         n = x / 1000;
-        p = 'K';
+        p = 'тыс';
     }
-    const s = n > 1000 ? 0.1 : n > 100 ? 1 : 100;
-    return `${Math.round(n * s) / s}${p}`;
+    const s = n > 1000 ? 0.1 : n > 100 ? 1 : n > 10 ? 10 : 100;
+    return `${Math.round(n * s) / s}${p}`.replace('.', ',');
 }
 
 function formatLong(x: number) {
@@ -220,7 +220,10 @@ export default function Chart({ width: srcWidth, height: srcHeight, data }: Char
             {moneyBars}
             {peopleBars}
             <Label class="chart-title" x={width / 2} y={PADDING} halign="center" valign="bottom" size={24}>
-                Среднедушевые доходы (по данным Белстат)
+                Среднедушевые доходы белорусов
+            </Label>
+            <Label class="chart-sub-title" x={width / 2} y={PADDING + 24} halign="center" valign="bottom" size={16}>
+                (по данным Белстат)
             </Label>
             <Label class="axis-label" x={width - PADDING} y={baseY} halign="left" valign="center" size={BAR_LABEL_SIZE}>
                 доходы на человека в месяц
