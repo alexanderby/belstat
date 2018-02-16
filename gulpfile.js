@@ -51,13 +51,19 @@ gulp.task('build-html', () => {
         .pipe(gulpConnect.reload());
 });
 
+gulp.task('build-css', () => {
+    return gulp.src('./src/**/*.css')
+        .pipe(gulp.dest('./www'))
+        .pipe(gulpConnect.reload());
+});
+
 gulp.task('copy-deps', () => {
     return gulp.src('./node_modules/malevic/umd/index.js')
         .pipe(gulpRename('malevic.js'))
         .pipe(gulp.dest('./www'));
 });
 
-gulp.task('watch', ['debug-js', 'build-html', 'copy-deps'], () => {
+gulp.task('watch', ['debug-js', 'build-html', 'build-css', 'copy-deps'], () => {
     gulpConnect.server({
         host: '0.0.0.0',
         port: 9073,
@@ -66,6 +72,7 @@ gulp.task('watch', ['debug-js', 'build-html', 'copy-deps'], () => {
     });
     gulp.watch(['src/**/*.ts', 'src/**/*.tsx'], ['debug-js']);
     gulp.watch(['src/**/*.html'], ['build-html']);
+    gulp.watch(['src/**/*.css'], ['build-css']);
 });
 
 gulp.task('default', ['build-js', 'build-html', 'copy-deps']);
