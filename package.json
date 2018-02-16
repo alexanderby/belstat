@@ -10,19 +10,18 @@
   "author": "Alexander Shutov",
   "license": "ISC",
   "dependencies": {
-    "malevic": "^0.9.1"
+    "malevic": "0.9.4"
   },
   "devDependencies": {
-    "@alexlur/rollup-plugin-typescript": "^1.0.4",
-    "gulp": "^3.9.1",
-    "gulp-connect": "^5.0.0",
-    "gulp-rename": "^1.2.2",
-    "gulp-replace": "^0.6.1",
-    "http-server": "^0.10.0",
-    "rollup": "^0.52.0",
-    "rollup-stream": "^1.24.1",
-    "ts-node": "^3.3.0",
-    "typescript": "^2.6.2",
-    "vinyl-source-stream": "^1.1.0"
+    "gulp": "3.9.1",
+    "gulp-connect": "5.2.0",
+    "gulp-rename": "1.2.2",
+    "gulp-replace": "0.6.1",
+    "rollup": "0.56.0",
+    "rollup-plugin-typescript": "0.8.1",
+    "rollup-stream": "1.24.1",
+    "ts-node": "4.1.0",
+    "typescript": "2.7.2",
+    "vinyl-source-stream": "2.0.0"
   }
 }

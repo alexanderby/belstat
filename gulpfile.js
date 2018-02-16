@@ -4,7 +4,7 @@ const gulpRename = require('gulp-rename');
 const gulpReplace = require('gulp-replace');
 const Malevic = require('malevic');
 const rollup = require('rollup');
-const rollupPluginTypescript = require('@alexlur/rollup-plugin-typescript');
+const rollupPluginTypescript = require('rollup-plugin-typescript');
 const rollupStream = require('rollup-stream');
 const sourceStream = require('vinyl-source-stream');
 const typescript = require('typescript');
@@ -16,12 +16,14 @@ const data = require('./src/data/belstat').default;
 const buildJS = ({ production }) => () => {
     return rollupStream({
         input: './src/index.tsx',
-        strict: true,
-        format: 'iife',
         external: ['malevic'],
-        globals: { 'malevic': 'Malevic' },
         rollup,
-        sourcemap: production ? false : 'inline',
+        output: {
+            strict: true,
+            format: 'iife',
+            globals: { 'malevic': 'Malevic' },
+            sourcemap: production ? false : 'inline',
+        },
         plugins: [
             rollupPluginTypescript({
                 typescript,
@@ -42,7 +44,7 @@ gulp.task('build-html', () => {
         .pipe(gulpReplace(
             /{{BODY}}/,
             Malevic.renderToString(
-                Body({ title: 'Server Side', data })
+                Body({ data })
             )
         ))
         .pipe(gulp.dest('./www'))

@@ -3,14 +3,13 @@ import ResourcesByPerson from './charts/ResourcesByPerson';
 import { BelstatData } from './definitions';
 
 interface BodyProps {
-    title: string;
     data: BelstatData;
 }
 
 declare var module;
 const isNodeJS = typeof module !== 'undefined' && module.exports;
 
-export default function Body({ title, data }: BodyProps) {
+export default function Body({ data }: BodyProps) {
     if (isNodeJS) {
         return (
             <main>

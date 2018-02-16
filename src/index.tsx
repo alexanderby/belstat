@@ -1,10 +1,11 @@
 import { html, render } from 'malevic';
+import './polyfills';
 import Body from './Body';
 import data from './data/belstat';
 
 function renderBody() {
     render(document.body, (
-        <Body title="Hello, World!" data={data} />
+        <Body data={data} />
     ));
 }
 
